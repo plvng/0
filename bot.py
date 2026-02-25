@@ -1,5 +1,6 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
 from datetime import datetime, timezone, timedelta
+import os
 from telegram.ext import (
     Application,
     CommandHandler,
@@ -9,8 +10,8 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TGK = "@olegthegoose"
-TOKEN = "5657263588:AAEINvs0C0Mhvyv2Bf4JKmx6vYokCvWanLg"
+TGK = os.getenv("TGK")
+TOKEN = os.getenv("TOKEN")
 
 STOP_MESSAGE = f"🍭РАЗГОВОР ОКОНЧЕН🍭"
 FIND_MESSAGE = f"🍭ИЩЕМ ЖДИ🍭"
