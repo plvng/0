@@ -1,6 +1,5 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime, timezone, timedelta
-from dotenv import load_dotenv
 import os
 from telegram.ext import (
     Application,
@@ -10,7 +9,6 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
-load_dotenv()
 TGK = os.getenv("TGK")
 TOKEN = os.getenv("TOKEN")
 
