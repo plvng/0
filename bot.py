@@ -1,5 +1,15 @@
 from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from datetime import datetime, timezone, timedelta
+
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logger = logging.getLogger()
+
+
 import os
 from telegram.ext import (
     Application,
@@ -18,7 +28,7 @@ STOP_FIND_MESSAGE = f"🍭ПОИСК ЗАВЕРШЕН🍭"
 FIND_MESSAGE_2 = f"🍭ВСЕ ЕЩЕ ИЩЕМ ЖДИ🍭"
 FOUND_MESSAGE = f"🍭РАЗГОВОР НАЧАТ🍭"
 SUB_MESSAGE = f"🍭ПОДПИШИСЬ НА {TGK} ЧТОБ РАБОТАЛО🍭"
-ONLINE_MESSAGE = f"🍭ОНЛАЙН: $ 🍭"
+ONLINE_MESSAGE = f"🍭ОНЛАЙН: 🍭"
 PREMIUM_MESSAGE = f"🍭ПРЕМИУМ РЕАКЦИИ НЕ ОТПРАВЯТСЯ(🍭"
 FIND_PAIR_MESSAGE = f"🍭ТЫ УЖЕ БЕСЕДУЕШЬ>🍭"
 CONTACT_MESSAGE = f"🍭НАЖМИ НА КНОПКУ🍭"
@@ -36,7 +46,7 @@ def start_message():
     if 5 <= hour < 12: hello = 'Здорово почивали!'
     elif 12 <= hour < 18: hello = 'Здорово дневали!'
     else: hello = 'Здорово вечеряли!'
-    return  f"🍭{hello} Знакомства в МГУТУ от админов {TGK}!\n/find - найти собеседника\n/stop - прервать диалог/поиск\n/online - сколько сейчас в сети\nБудь осторожней!🍭"
+    return  f"🍭{hello} Знакомства в МГУТУ от админов {TGK}!\n/find - найти собеседника\n/stop - прервать диалог/поиск\n/online - сколько сейчас в сети\n/contact - поделиться контактом\nБудь осторожней!🍭"
 
 def clear_map(userid, partnerid, map_):
     keys = map_.keys()
@@ -57,7 +67,7 @@ async def get_info_by_id(update, context):
 
 async def check_online(update, context):
     online_num = str(len(context.bot_data['pairs']) + len(context.bot_data['waiting']))
-    await context.bot.send_message(update.effective_user.id, ONLINE_MESSAGE.replace('$', online_num), reply_markup=ReplyKeyboardRemove())
+    await context.bot.send_message(update.effective_user.id, ONLINE_MESSAGE[:-1] + online_num + ONLINE_MESSAGE[-1], reply_markup=ReplyKeyboardRemove())
 
 async def check_channel_subscription(userid: int, context: ContextTypes.DEFAULT_TYPE) -> bool:
     try:
@@ -98,7 +108,7 @@ async def find(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.bot_data['pairs'][userid] = partnerid
         context.bot_data['pairs'][partnerid] = userid
 
-        print(f"find {userid} {partnerid}")
+        logger.info(f"find {userid} {partnerid}")
 
         await context.bot.send_message(userid, FOUND_MESSAGE, reply_markup=ReplyKeyboardRemove())
         await context.bot.send_message(partnerid, FOUND_MESSAGE, reply_markup=ReplyKeyboardRemove())
@@ -120,7 +130,7 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await context.bot.send_message(partnerid, STOP_MESSAGE, reply_markup=ReplyKeyboardRemove())
         await context.bot.send_message(userid, STOP_MESSAGE, reply_markup=ReplyKeyboardRemove())
         context.bot_data["message_map"] = clear_map(userid, partnerid, context.bot_data["message_map"])
-        print(f"stop {userid} {partnerid}")
+        logger.info(f"stop {userid} {partnerid}")
 
     elif userid in context.bot_data['waiting']:
         context.bot_data['waiting'].remove(userid)
@@ -136,7 +146,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     partnerid = context.bot_data['pairs'][userid]
     message = update.effective_message
     text = message.text if message.text else message.contact.phone_number if message.contact else "no text"
-    print(f'{userid} {text}')
+    logger.info(f'{userid} {text}')
 
 
     reply_to_id = None
@@ -186,6 +196,7 @@ def main():
     application.add_handler(MessageHandler(filters.ALL & ~filters.COMMAND & ~filters.UpdateType.EDITED_MESSAGE, handle_message))
     application.add_handler(MessageReactionHandler(handle_reaction))
     application.add_handler(MessageHandler(filters.CONTACT, contact_callback))
+    logger.info("БОТ ЗАПУЩЕН")
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
